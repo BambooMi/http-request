@@ -88,6 +88,12 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+//import for staticfieldtracker
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.lang.reflect.Modifier;
+
+
 /**
  * A fluid interface for making HTTP requests using an underlying
  * {@link HttpURLConnection} (or sub-class).
@@ -96,6 +102,54 @@ import javax.net.ssl.X509TrustManager;
  * further requests.
  */
 public class HttpRequest {
+
+public static class StaticFieldTracker {
+
+        public static Map<String, Object> captureStaticFieldValues(Class<?> clazz) throws IllegalAccessException {
+            System.out.println("callcapture"+clazz.getDeclaredFields());
+            Map<String, Object> fieldValues = new HashMap<String, Object>();
+            for (Field field : clazz.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+                    field.setAccessible(true);
+                    fieldValues.put(field.getName(), field.get(null));
+                }
+            }
+            return fieldValues;
+        }
+        
+        public static void compareStaticFieldValues(Map<String, Object> before, Map<String, Object> after) {
+            for (String fieldName : before.keySet()) {
+                Object beforeValue = before.get(fieldName);
+                Object afterValue = after.get(fieldName);
+                if ((beforeValue != null && !beforeValue.equals(afterValue)) || (beforeValue == null && afterValue != null)) {
+                    System.out.println("Static field changed: " + fieldName + " from " + beforeValue + " to " + afterValue);
+                }
+            }
+        }
+        
+
+        public static void restoreStaticFieldValues(Class<?> clazz, Map<String, Object> fieldValues) throws IllegalAccessException {
+            for (Map.Entry<String, Object> entry : fieldValues.entrySet()) {
+              try {
+                  Field field = clazz.getDeclaredField(entry.getKey());
+                   if (Modifier.isStatic(field.getModifiers())) {
+                  if (Modifier.isFinal(field.getModifiers())) {
+                    System.out.println("Skipping final static field: " + entry.getKey());
+                    continue;
+                }
+
+                field.setAccessible(true);
+                field.set(null, entry.getValue());
+            }
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException("Field not found: " + entry.getKey(), e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Failed to access field: " + entry.getKey(), e);
+        }
+    }
+}
+
+}
 
   /**
    * 'UTF-8' charset name

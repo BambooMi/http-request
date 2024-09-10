@@ -86,6 +86,10 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+
+import org.junit.Before;
+import static org.junit.Assert.*;
+
 /**
  * Unit tests of {@link HttpRequest}
  */
@@ -2482,6 +2486,10 @@ public class HttpRequestTest extends ServerTestCase {
    */
   @Test
   public void postWithVaragsQueryParams() throws Exception {
+
+    // Capture static field values before the test
+    Map<String, Object> beforeValues = HttpRequest.StaticFieldTracker.captureStaticFieldValues(HttpRequest.class); 
+
     final Map<String, String> outputParams = new HashMap<String, String>();
     final AtomicReference<String> method = new AtomicReference<String>();
     handler = new RequestHandler() {
@@ -2499,6 +2507,13 @@ public class HttpRequestTest extends ServerTestCase {
     assertEquals("POST", method.get());
     assertEquals("user", outputParams.get("name"));
     assertEquals("100", outputParams.get("number"));
+
+    // Capture static field values after the test
+    Map<String, Object> afterValues = HttpRequest.StaticFieldTracker.captureStaticFieldValues(HttpRequest.class);
+
+    // Compare before and after values
+    HttpRequest.StaticFieldTracker.compareStaticFieldValues(beforeValues, afterValues);
+
   }
 
   /**
@@ -3455,6 +3470,10 @@ public class HttpRequestTest extends ServerTestCase {
    */
   @Test
   public void customConnectionFactory() throws Exception {
+
+    // Capture static field values before the test
+    Map<String, Object> beforeValues = HttpRequest.StaticFieldTracker.captureStaticFieldValues(HttpRequest.class); 
+    
     handler = new RequestHandler() {
 
       @Override
@@ -3477,6 +3496,13 @@ public class HttpRequestTest extends ServerTestCase {
     HttpRequest.setConnectionFactory(factory);
     int code = get("http://not/a/real/url").code();
     assertEquals(200, code);
+
+    // Capture static field values after the test
+    Map<String, Object> afterValues = HttpRequest.StaticFieldTracker.captureStaticFieldValues(HttpRequest.class);
+
+    // Compare before and after values
+    HttpRequest.StaticFieldTracker.compareStaticFieldValues(beforeValues, afterValues);
+
   }
 
   /**
